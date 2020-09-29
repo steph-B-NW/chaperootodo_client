@@ -1,21 +1,32 @@
 pipeline{
         agent any
+	environment {
+		app_version = 'v1'
+	}
         stages{
             stage('Build Image'){
                 steps{
-                    sh "sudo docker build -t chaperoo ."
+			script{
+				if (env.rollback == 'false'){
+                    			image = docker.build("stephbnw/chaperoo-fronted")
+				}
+			}
                 }
             }
-            stage('Clean'){
-                steps{
-                    sh label: '', script: '''if [ "$(sudo docker ps -aq -f name=chaptodo)" ]; then
-                        sudo docker rm -f chaptodo
-                    fi'''
+            stage('Tag & Push Image'){
+               steps{
+                   script{
+                       if (env.rollback == 'false'){
+                           docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials;){
+                               image.push("${.app_version}")
+                                  }
+                             }
+                        }
                     }
                 }
-            stage('Run Container'){
+            stage('Deploy App'){
                 steps{
-                    sh "sudo docker run -d --name chaptodo -p 80:80 chaperoo"
+                    sh "docker-compose pull && docker-compose up -d"
                 }
             }
         }    
