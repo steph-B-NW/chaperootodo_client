@@ -2,6 +2,7 @@ pipeline{
         agent any
 	environment {
 		app_version = 'v1'
+		rollback = 'false'
 	}
         stages{
             stage('Build Image'){
@@ -18,7 +19,7 @@ pipeline{
                    script{
                        if (env.rollback == 'false'){
                            docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials){
-                               image.push("${.app_version}")
+                               image.push("${env.app_version}")
                                   }
                              }
                         }
